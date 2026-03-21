@@ -1,8 +1,10 @@
-# Jarurat Care - Patient Records Dashboard
+# SehatSync - Patient Records Dashboard
 
 A modern, responsive patient records management system built with React, TypeScript, and Tailwind CSS. This application provides healthcare professionals with an intuitive interface to manage patient data, medical history, and appointments efficiently.
 
-![Jarurat Care Dashboard](https://img.shields.io/badge/Healthcare-Patient_Records-blue?style=for-the-badge)
+> Maintained by the SehatSync development team with active ongoing improvements and production-readiness focus.
+
+![SehatSync Dashboard](https://img.shields.io/badge/Healthcare-Patient_Records-blue?style=for-the-badge)
 ![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Included-3178C6?style=for-the-badge&logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-Styling-06B6D4?style=for-the-badge&logo=tailwindcss)
@@ -40,7 +42,7 @@ A modern, responsive patient records management system built with React, TypeScr
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd jarurat-care-dashboard
+   cd sehatsync-patient-dashboard
    ```
 
 2. **Install dependencies**
@@ -177,7 +179,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🆘 Support
 
 For support and questions:
-- **Email**: support@jaruratcare.com
+- **Email**: support@sehatsync.com
 - **Documentation**: Visit our comprehensive documentation
 - **Issues**: Report bugs and request features in the GitHub Issues section
 
@@ -190,6 +192,17 @@ For support and questions:
 - **Reports**: Generate patient reports and medical summaries
 - **Integration**: Connect with existing hospital management systems
 
+## 🏆 High-Impact Features To Add Next
+
+- **Role-Based Dashboards**: Separate views for Doctor, Nurse, Reception, and Admin with permission-scoped actions.
+- **Smart Clinical Alerts**: Flag allergy conflicts, missed follow-ups, and high-risk vitals using configurable rules.
+- **EMR Timeline View**: Unified chronological timeline for visits, prescriptions, labs, and notes.
+- **E-Prescription Module**: Generate printable and digital prescriptions with dosage validation checks.
+- **Lab & Diagnostic Integration**: Upload reports, track test status, and attach results to patient records.
+- **Offline-First Support**: Continue capturing patient data during network issues and sync automatically later.
+- **Analytics Command Center**: KPIs for patient load, revisit rates, pending tests, and care quality metrics.
+- **Audit Log & Compliance Pack**: Track every data change with user/time/IP metadata for compliance readiness.
+
 ---
 
-**Jarurat Care** - Empowering healthcare professionals with better patient management tools.
+**SehatSync** - Empowering healthcare professionals with better patient management tools.

@@ -36,7 +36,7 @@ const Home = () => {
             <Activity className="h-16 w-16 text-primary" />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            Welcome to <span className="text-primary">Jarurat Care</span>
+            Welcome to <span className="text-primary">SehatSync</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
             A comprehensive patient records management system designed to streamline healthcare operations 
@@ -69,7 +69,7 @@ const Home = () => {
       {/* Features Section */}
       <section className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
-          Why Choose Jarurat Care?
+          Why Choose SehatSync?
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => {
@@ -118,7 +118,7 @@ const Home = () => {
             Ready to Get Started?
           </h2>
           <p className="text-muted-foreground mb-8">
-            Begin managing patient records more efficiently with Jarurat Care's 
+            Begin managing patient records more efficiently with SehatSync's 
             intuitive and powerful patient management system.
           </p>
           <Link to="/patients">

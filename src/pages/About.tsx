@@ -47,10 +47,10 @@ const About = () => {
             <Activity className="h-16 w-16 text-primary" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-            About Jarurat Care
+            About SehatSync
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Jarurat Care is a modern patient records management system designed to revolutionize 
+            SehatSync is a modern patient records management system designed to revolutionize 
             how healthcare providers manage patient information, streamline workflows, and improve care quality.
           </p>
         </div>
@@ -124,7 +124,7 @@ const About = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Jarurat Care is built using modern web technologies including React, TypeScript, and Tailwind CSS, 
+                SehatSync is built using modern web technologies including React, TypeScript, and Tailwind CSS, 
                 ensuring a fast, reliable, and maintainable platform.
               </p>
               <p className="text-muted-foreground">
@@ -164,7 +164,7 @@ const About = () => {
                 <div className="flex flex-col items-center">
                   <Mail className="h-8 w-8 text-primary mb-2" />
                   <h3 className="font-semibold">Email</h3>
-                  <p className="text-muted-foreground">support@jaruratcare.com</p>
+                  <p className="text-muted-foreground">support@sehatsync.com</p>
                 </div>
                 <div className="flex flex-col items-center">
                   <Phone className="h-8 w-8 text-primary mb-2" />

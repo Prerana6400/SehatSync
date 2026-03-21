@@ -18,7 +18,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-2">
             <Activity className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold text-primary">Jarurat Care</span>
+            <span className="text-2xl font-bold text-primary">SehatSync</span>
           </Link>
 
           <nav className="hidden md:flex items-center space-x-8">

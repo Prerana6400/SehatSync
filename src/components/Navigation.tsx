@@ -1,14 +1,29 @@
-import { Link, useLocation } from "react-router-dom";
-import { Activity, Users, Info, Plus } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Activity,
+  LayoutDashboard,
+  Users,
+  Info,
+  Plus,
+  LogIn,
+  LogOut,
+  CalendarDays,
+  Bell,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navigation = () => {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+  const { user, logout, loading } = useAuth();
+
   const navItems = [
-    { name: "Home", path: "/", icon: Activity },
+    { name: "Dashboard", path: "/", icon: LayoutDashboard },
     { name: "Patients", path: "/patients", icon: Users },
+    { name: "Appointments", path: "/appointments", icon: CalendarDays },
+    { name: "Alerts", path: "/alerts", icon: Bell },
     { name: "About", path: "/about", icon: Info },
   ];
 
@@ -17,7 +32,7 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-2">
-            <Activity className="h-8 w-8 text-primary" />
+            <Activity className="h-8 w-8 text-primary" aria-hidden />
             <span className="text-2xl font-bold text-primary">SehatSync</span>
           </Link>
 
@@ -42,24 +57,42 @@ const Navigation = () => {
             })}
           </nav>
 
-          <div className="flex items-center space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="hidden sm:flex"
-              onClick={() => {
-                // Will be connected to add patient modal
-                const event = new CustomEvent('openAddPatient');
-                window.dispatchEvent(event);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Patient
-            </Button>
+          <div className="flex items-center gap-2">
+            {user && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex"
+                onClick={() => navigate("/patients", { state: { openAdd: true } })}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Patient
+              </Button>
+            )}
+            {!loading && user && (
+              <span className="hidden lg:inline text-xs text-muted-foreground max-w-[140px] truncate">
+                {user.email}
+              </span>
+            )}
+            {!loading && user ? (
+              <Button variant="ghost" size="sm" onClick={() => logout()}>
+                <LogOut className="h-4 w-4 mr-1" />
+                Sign out
+              </Button>
+            ) : (
+              !loading && (
+                <Button variant="default" size="sm" asChild>
+                  <Link to="/login">
+                    <LogIn className="h-4 w-4 mr-1" />
+                    Sign in
+                  </Link>
+                </Button>
+              )
+            )}
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Collapsed nav for small screens */}
         <nav className="md:hidden pb-4">
           <div className="flex space-x-4">
             {navItems.map((item) => {

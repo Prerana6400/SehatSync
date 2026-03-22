@@ -1,94 +1,88 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Target, Users, Award, Mail, Phone, MapPin } from "lucide-react";
+import { Activity, Target, Users, Award, Mail, BookOpen, AlertCircle } from "lucide-react";
 
 const About = () => {
-  const teamMembers = [
-    {
-      name: "Dr. Sarah Johnson",
-      role: "Chief Medical Officer",
-      description: "15+ years in healthcare management and digital health solutions."
-    },
-    {
-      name: "Alex Chen",
-      role: "Lead Developer",
-      description: "Expert in healthcare software development and data security."
-    },
-    {
-      name: "Maria Rodriguez",
-      role: "UX Designer",
-      description: "Specialized in creating intuitive interfaces for healthcare professionals."
-    }
-  ];
-
   const values = [
     {
       icon: Target,
-      title: "Patient-Centric",
-      description: "Every feature is designed with patient care and safety as the top priority."
+      title: "Patient safety first",
+      description:
+        "Charts highlight allergies and problem lists so the whole team sees critical context before documenting a new encounter.",
     },
     {
       icon: Users,
-      title: "Healthcare Teams",
-      description: "Built for healthcare professionals by healthcare professionals."
+      title: "Built for small teams",
+      description:
+        "Reception can register patients; clinicians and nurses can add visits and notes with clear timestamps and provider labels.",
     },
     {
       icon: Award,
-      title: "Excellence",
-      description: "Committed to delivering the highest quality healthcare management tools."
-    }
+      title: "Operational clarity",
+      description:
+        "The analytics view surfaces volume, revisit patterns, and pending follow-ups—so managers can spot backlog without exporting spreadsheets.",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-16">
-        {/* Header */}
-        <div className="text-center mb-16">
+      <div className="container mx-auto px-4 py-16 max-w-4xl">
+        <div className="text-center mb-12">
           <div className="flex justify-center mb-6">
             <Activity className="h-16 w-16 text-primary" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-            About SehatSync
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            SehatSync is a modern patient records management system designed to revolutionize 
-            how healthcare providers manage patient information, streamline workflows, and improve care quality.
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">About SehatSync</h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            SehatSync is an open, self-hosted style patient registry and encounter log for teaching, demos, and
+            small-practice pilots. It pairs a React dashboard with a Node API and PostgreSQL so you own the
+            data and can extend the schema as you grow.
           </p>
         </div>
 
-        {/* Mission Statement */}
-        <section className="mb-16">
+        <Card className="mb-8 border-amber-500/30 bg-amber-500/5">
+          <CardHeader className="flex flex-row items-start gap-3 space-y-0">
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <CardTitle className="text-lg">Important notice</CardTitle>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                This software is <strong>not</strong> a certified medical device and is <strong>not</strong>{" "}
+                a substitute for a full EHR or legal compliance with HIPAA, GDPR, or local healthcare rules.
+                Do not use real patient data until you have completed a proper security and compliance review
+                for your environment.
+              </p>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <section className="mb-12">
           <Card className="border-l-4 border-l-primary">
             <CardHeader>
-              <CardTitle className="text-2xl">Our Mission</CardTitle>
+              <CardTitle className="text-2xl">Mission</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                To provide healthcare professionals with intuitive, secure, and efficient tools that enhance 
-                patient care delivery while reducing administrative burden. We believe that better data management 
-                leads to better patient outcomes.
+              <p className="text-muted-foreground leading-relaxed">
+                Give developers and clinic innovators a <strong>realistic</strong> foundation: authenticated
+                APIs, relational data, encounter history, and dashboards that behave like production tools—so
+                you can iterate on workflows instead of wiring mocks forever.
               </p>
             </CardContent>
           </Card>
         </section>
 
-        {/* Core Values */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
-            Our Core Values
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold text-center mb-8">Principles</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {values.map((value, index) => {
               const Icon = value.icon;
               return (
-                <Card key={index} className="text-center hover:shadow-lg transition-shadow duration-300">
+                <Card key={index} className="hover:shadow-md transition-shadow">
                   <CardHeader>
-                    <div className="flex justify-center mb-4">
-                      <Icon className="h-12 w-12 text-primary" />
+                    <div className="flex justify-center mb-3">
+                      <Icon className="h-10 w-10 text-primary" />
                     </div>
-                    <CardTitle className="text-xl">{value.title}</CardTitle>
+                    <CardTitle className="text-lg text-center">{value.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">{value.description}</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{value.description}</p>
                   </CardContent>
                 </Card>
               );
@@ -96,87 +90,46 @@ const About = () => {
           </div>
         </section>
 
-        {/* Team Section */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
-            Meet Our Team
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {teamMembers.map((member, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
-                <CardHeader>
-                  <CardTitle className="text-xl">{member.name}</CardTitle>
-                  <p className="text-primary font-semibold">{member.role}</p>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{member.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* Technology */}
-        <section className="mb-16">
+        <section className="mb-12">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Technology & Security</CardTitle>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Stack &amp; documentation
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                SehatSync is built using modern web technologies including React, TypeScript, and Tailwind CSS, 
-                ensuring a fast, reliable, and maintainable platform.
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                <strong className="text-foreground">Frontend:</strong> React, TypeScript, Vite, Tailwind,
+                shadcn/ui, TanStack Query.
               </p>
-              <p className="text-muted-foreground">
-                We prioritize data security and privacy, implementing industry-standard encryption and security 
-                measures to protect sensitive patient information in compliance with healthcare regulations.
+              <p>
+                <strong className="text-foreground">Backend:</strong> Express, Prisma, PostgreSQL, JWT auth
+                with role enums (admin, doctor, nurse, reception).
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                <div className="bg-secondary rounded-lg p-4 text-center">
-                  <p className="font-semibold">React</p>
-                  <p className="text-sm text-muted-foreground">Frontend</p>
-                </div>
-                <div className="bg-secondary rounded-lg p-4 text-center">
-                  <p className="font-semibold">TypeScript</p>
-                  <p className="text-sm text-muted-foreground">Type Safety</p>
-                </div>
-                <div className="bg-secondary rounded-lg p-4 text-center">
-                  <p className="font-semibold">Tailwind</p>
-                  <p className="text-sm text-muted-foreground">Styling</p>
-                </div>
-                <div className="bg-secondary rounded-lg p-4 text-center">
-                  <p className="font-semibold">Secure</p>
-                  <p className="text-sm text-muted-foreground">HIPAA Ready</p>
-                </div>
-              </div>
+              <p>
+                See the project <code className="text-xs bg-muted px-1 py-0.5 rounded">README.md</code> for
+                environment variables, database setup, and how to run API + UI together.
+              </p>
             </CardContent>
           </Card>
         </section>
 
-        {/* Contact */}
         <section>
           <Card className="bg-primary/5">
             <CardHeader>
-              <CardTitle className="text-2xl text-center">Get in Touch</CardTitle>
+              <CardTitle className="text-xl text-center">Contact</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                <div className="flex flex-col items-center">
-                  <Mail className="h-8 w-8 text-primary mb-2" />
-                  <h3 className="font-semibold">Email</h3>
-                  <p className="text-muted-foreground">support@sehatsync.com</p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <Phone className="h-8 w-8 text-primary mb-2" />
-                  <h3 className="font-semibold">Phone</h3>
-                  <p className="text-muted-foreground">+1 (555) 123-4567</p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <MapPin className="h-8 w-8 text-primary mb-2" />
-                  <h3 className="font-semibold">Address</h3>
-                  <p className="text-muted-foreground">123 Healthcare Ave<br />Medical District, NY 10001</p>
-                </div>
+            <CardContent className="text-center space-y-2">
+              <div className="flex justify-center mb-2">
+                <Mail className="h-8 w-8 text-primary" />
               </div>
+              <p className="text-muted-foreground text-sm">
+                Product inquiries: <span className="text-foreground">support@sehatsync.com</span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Replace with your organization&apos;s support address when you fork or deploy this project.
+              </p>
             </CardContent>
           </Card>
         </section>

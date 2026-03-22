@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  NURSE
+  RECEPTION
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(RECEPTION)
+  createdAt    DateTime @default(now())
+}
+
+model Patient {
+  id               Int       @id @default(autoincrement())
+  name             String
+  age              Int
+  contact          String
+  email            String
+  address          String
+  gender           String
+  bloodType        String?
+  allergies        String?
+  emergencyContact String?
+  medicalHistory   String?
+  primaryCondition String?
+  assignedDoctor   String?
+  followUpDue      DateTime?
+  lastVisit        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  visits           ClinicalVisit[]
+  appointments     Appointment[]
+
+  @@index([email])
+  @@index([name])
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Appointment {
+  id         Int               @id @default(autoincrement())
+  patientId  Int
+  patient    Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorName String
+  startAt    DateTime
+  endAt      DateTime?
+  status     AppointmentStatus @default(SCHEDULED)
+  notes      String?
+  createdAt  DateTime          @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([patientId])
+  @@index([startAt])
+  @@index([status])
+}
+
+model ClinicalVisit {
+  id               Int      @id @default(autoincrement())
+  patientId        Int
+  patient          Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitDate        DateTime
+  chiefComplaint   String
+  diagnosis        String?
+  clinicalNotes    String?
+  providerLabel    String?
+  createdAt        DateTime @default(now())
+
+  @@index([patientId])
+  @@index([visitDate])
+}

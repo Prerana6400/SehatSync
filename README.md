@@ -1,208 +1,202 @@
-# SehatSync - Patient Records Dashboard
+# SehatSync — Patient records dashboard
 
-A modern, responsive patient records management system built with React, TypeScript, and Tailwind CSS. This application provides healthcare professionals with an intuitive interface to manage patient data, medical history, and appointments efficiently.
+React + TypeScript + Tailwind UI for managing patient records, visits, and clinic workflows. Data is stored in PostgreSQL via Prisma and a Node/Express API.
 
-> Maintained by the SehatSync development team with active ongoing improvements and production-readiness focus.
+Maintained by the SehatSync team with ongoing development toward production readiness.
 
-![SehatSync Dashboard](https://img.shields.io/badge/Healthcare-Patient_Records-blue?style=for-the-badge)
-![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-Included-3178C6?style=for-the-badge&logo=typescript)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-Styling-06B6D4?style=for-the-badge&logo=tailwindcss)
+## Features
 
-## 🏥 Features
+### Core
 
-### Core Functionality
-- **Patient Management**: Comprehensive patient record management with detailed profiles
-- **Search & Filter**: Advanced search functionality to quickly locate patient records
-- **Responsive Design**: Fully responsive interface that works on desktop and mobile devices
-- **Real-time Updates**: Live patient data management with instant updates
+- **Patient registry**: MRNs, demographics, contacts, allergies, problem list (PostgreSQL)
+- **Encounters**: Chief complaint, diagnosis, notes, provider label; timeline on each chart
+- **Dashboard** (`/`): Overview stats, activity chart, recent patients (requires sign-in)
+- **Search**: Name, patient ID, or phone on the patient list
+- **Analytics** (`/analytics`): Volume, revisit rate, pending actions
+- **Appointments** (`/appointments`): Month calendar, table, schedule / reschedule / cancel
+- **Alerts** (`/alerts`): Overdue follow-ups, upcoming visits, checkups, incomplete profiles
+- **Public summary**: Marketing page (`/welcome`) can call `GET /api/public/summary` without auth
 
-### Patient Information
-- Personal details (name, age, contact information)
-- Medical history and records
-- Emergency contact information
-- Blood type and allergies
-- Visit history and appointments
+### Patient data
 
-### User Experience
-- **Professional Design**: Clean, medical-focused interface design
-- **Loading States**: Elegant loading animations and error handling
-- **Form Validation**: Comprehensive input validation for data integrity
-- **Modal Interactions**: Smooth modal dialogs for detailed views and forms
-- **Toast Notifications**: User-friendly notifications for actions and updates
+- Demographics, addresses, contacts
+- Allergies (highlighted on chart)
+- Emergency contact and blood type
+- Medical history / problem list
+- Encounter history
 
-## 🚀 Getting Started
+### UX
+
+- Responsive layout, loading and error states
+- Form validation on client and API
+- Modals for detail views and forms
+- Toasts for actions and errors
+
+## Getting started
 
 ### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn package manager
 
-### Installation
+- Node.js 18+ recommended
+- npm
+- PostgreSQL (create a database, e.g. `sehatsync`, or adjust `DATABASE_URL`)
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd sehatsync-patient-dashboard
+### Full stack (PostgreSQL + API + frontend)
+
+1. **Environment file** — single `.env` at the **repo root** (not only under `server/`). Used by the API, Prisma, and optional `VITE_*` vars:
+
+   ```env
+   DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/sehatsync?schema=public"
+   JWT_SECRET="use-a-long-random-string-in-production"
+   PORT=4000
+   CORS_ORIGIN=http://localhost:8080
+   SEED_ADMIN_EMAIL=admin@sehatsync.com
+   SEED_ADMIN_PASSWORD=Admin123!
+   VITE_API_URL=
    ```
 
-2. **Install dependencies**
+   Align `DATABASE_URL` with your Postgres host, port, user, password, and database. Leave `VITE_API_URL` empty in dev so Vite proxies `/api` to the backend.
+
+2. **Schema and seed**
+
    ```bash
-   npm install
+   cd server && npm install && cd ..
+   npm run db:push
+   npm run db:seed
    ```
 
-3. **Start the development server**
+   Reads env from the root `.env` only. After `schema.prisma` changes, run `npm run db:push` again before starting the API. Default admin (change in production): `admin@sehatsync.com` / `Admin123!`
+
+3. **API** (terminal 1):
+
    ```bash
+   cd server
    npm run dev
    ```
 
-4. **Open your browser**
-   Navigate to `http://localhost:8080` to view the application
+   Listens on `http://localhost:4000`. Health: `GET /api/health`. Env is loaded from the project root `.env`.
 
-### Building for Production
+4. **Frontend** (terminal 2, repo root):
+
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+   Open `http://localhost:8080`, sign in, then use Dashboard, Patients, Appointments, Alerts. Public marketing copy: `/welcome`.
+
+5. **First user** — If the `User` table is empty, `POST /api/auth/register` may create the first account (disabled once any user exists).
+
+### Database troubleshooting
+
+| Issue | Action |
+|--------|--------|
+| `Can't reach database server at localhost:5432` | Start PostgreSQL (Windows: Services, or Docker/WSL). Ensure root `.env` `DATABASE_URL` matches your instance. |
+| `npm run db:generate --pref` causes ENOENT | Invalid flag. From repo root: `npm run db:generate --prefix server`. From `server/`: `npm run db:generate` only. |
+| API `503` / "Database unavailable" | Start Postgres, then `npm run db:push` and `npm run db:seed` from repo root. |
+
+### Frontend-only
+
+`npm run dev` without a running API will show errors on protected routes; most features expect a logged-in session and a live API.
+
+### Install (frontend deps only)
+
+```bash
+git clone <repository-url>
+cd jarurat-patient-dash
+npm install
+npm run dev
+```
+
+Open `http://localhost:8080`.
+
+### Production build
 
 ```bash
 npm run build
 ```
 
-The build artifacts will be stored in the `dist/` directory.
+Output: `dist/`.
 
-## 🏗️ Technical Architecture
+## Technical architecture
 
-### Technology Stack
-- **Frontend Framework**: React 18 with TypeScript
-- **Styling**: Tailwind CSS with custom design system
-- **UI Components**: shadcn/ui component library
-- **State Management**: React Hooks (useState, useEffect)
-- **Routing**: React Router DOM
-- **Icons**: Lucide React
-- **Build Tool**: Vite
-- **Code Quality**: ESLint with TypeScript rules
+### Stack
 
-### Project Structure
+- Frontend: React 18, TypeScript, Vite, Tailwind, shadcn/ui, TanStack Query, React Router, Lucide
+- Backend: Node.js, Express, TypeScript
+- Data: PostgreSQL, Prisma ORM
+- Auth: JWT bearer tokens, roles `ADMIN`, `DOCTOR`, `NURSE`, `RECEPTION`
+
+### Project layout
+
 ```
 src/
-├── components/           # Reusable UI components
-│   ├── ui/              # Base UI components (shadcn/ui)
-│   ├── Navigation.tsx   # Main navigation component
-│   ├── PatientCard.tsx  # Patient card display component
-│   ├── PatientModal.tsx # Patient details modal
-│   └── AddPatientForm.tsx # Add patient form component
-├── pages/               # Application pages
-│   ├── Home.tsx         # Landing page
-│   ├── Patients.tsx     # Main patients dashboard
-│   ├── About.tsx        # About page
-│   └── NotFound.tsx     # 404 error page
-├── types/               # TypeScript type definitions
-│   └── patient.ts       # Patient interface definitions
-├── hooks/               # Custom React hooks
-├── lib/                 # Utility functions
-└── App.tsx              # Main application component
+├── components/
+│   ├── ui/                 # shadcn primitives
+│   ├── Navigation.tsx
+│   ├── DashboardCard.tsx
+│   ├── SearchBar.tsx
+│   ├── PatientFormModal.tsx
+│   ├── PatientCard.tsx
+│   ├── PatientModal.tsx
+│   ├── AppointmentTable.tsx
+│   └── AlertCard.tsx
+├── pages/
+│   ├── DashboardHome.tsx
+│   ├── Home.tsx            # /welcome
+│   ├── Patients.tsx
+│   ├── Appointments.tsx
+│   ├── Alerts.tsx
+│   ├── PatientAnalytics.tsx
+│   ├── About.tsx
+│   └── NotFound.tsx
+├── types/
+├── hooks/
+├── lib/
+└── App.tsx
 ```
 
-### Design System
-The application uses a custom design system with healthcare-focused colors and themes:
-- **Primary Colors**: Medical blue (#2563eb)
-- **Accent Colors**: Medical green (#16a34a)
-- **Typography**: Clean, readable fonts optimized for medical applications
-- **Components**: Consistent component variants across the application
+### Theming
 
-## 📱 Screenshots
+- Primary: `#2563eb` (configured via CSS variables in `src/index.css`)
+- Accent: `#16a34a`
+- Extend Tailwind in `tailwind.config.ts`; components under `src/components/ui/`
 
-### Landing Page
-Professional landing page with clear navigation and call-to-action buttons for accessing patient records and adding new patients.
+## Configuration
 
-### Patients Dashboard
-- Grid layout displaying patient cards with essential information
-- Advanced search and filter capabilities
-- Statistics cards showing patient metrics
-- Quick access to patient actions
+- Dev server: Vite on port 8080 (default)
+- `import` alias: `@/` → `src/`
+- TypeScript strict mode enabled
+- Production: set `VITE_API_URL` if the SPA is hosted separately from the API
 
-### Patient Details Modal
-- Comprehensive patient information display
-- Medical history and emergency contacts
-- Professional layout with clear information hierarchy
+## Deployment
 
-### Add Patient Form
-- Comprehensive form for adding new patients
-- Form validation and error handling
-- Medical-specific fields (blood type, medical history)
+Typical options: static hosting (Vercel, Netlify, S3) for the Vite build, with `VITE_API_URL` pointing at the deployed API. Run the API on a Node host or container with `DATABASE_URL` and `JWT_SECRET` set for the target environment.
 
-## 🔧 Configuration
+## Security
 
-### Environment Setup
-The application is configured to work with:
-- **Development Server**: Vite dev server on port 8080
-- **Path Aliases**: `@/` alias for the `src/` directory
-- **TypeScript**: Strict mode enabled for better type safety
+- Treat PHI according to your jurisdiction (e.g. HIPAA-style rules). This repo is a demo/MVP; harden auth, TLS, logging, and backups before production.
+- Use strong secrets and rotate JWT / DB credentials regularly.
+- Restrict CORS origins in production.
 
-### Data Source
-- **Public API**: Patient list is fetched from `https://jsonplaceholder.typicode.com/users` at runtime and mapped to the app's `Patient` type (name, email, phone -> contact, address, etc.).
-- **Fallback**: If the public API is unavailable, the app gracefully falls back to bundled mock patients so the UI remains fully functional.
+## Contributing
 
-### Screenshots
-- Add screenshots by placing images in the `public/` folder and referencing them in this README, e.g. `![Patients](public/patients.png)`.
-  - Recommended: Home, Patients Grid, Patient Modal, Add Patient Form, Loading/Error states.
+1. Fork the repo
+2. Branch: `git checkout -b feature/your-feature`
+3. Commit with clear messages
+4. Push and open a pull request
 
-### Customization
-- **Colors**: Modify color variables in `src/index.css`
-- **Components**: Customize UI components in `src/components/ui/`
-- **Styling**: Extend Tailwind configuration in `tailwind.config.ts`
 
-## 🚀 Deployment
 
-The application can be deployed to various platforms:
 
-### Other Platforms
-- **Vercel**: Connect your GitHub repository to Vercel
-- **Netlify**: Deploy directly from your Git repository
-- **AWS S3**: Upload build files to S3 bucket with static hosting
+## Roadmap (ideas)
 
-## 🔒 Security Considerations
-
-- Patient data is currently stored in local state (development only)
-- For production use, implement proper backend API with encryption
-- Consider HIPAA compliance requirements for healthcare applications
-- Implement proper authentication and authorization systems
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-For support and questions:
-- **Email**: support@sehatsync.com
-- **Documentation**: Visit our comprehensive documentation
-- **Issues**: Report bugs and request features in the GitHub Issues section
-
-## 🔮 Future Enhancements
-
-- **Backend Integration**: Connect to a proper database and API
-- **Authentication**: User login and role-based access control
-- **Appointment Scheduling**: Integrated calendar and appointment management
-- **Medical Records**: Enhanced medical history with file uploads
-- **Reports**: Generate patient reports and medical summaries
-- **Integration**: Connect with existing hospital management systems
-
-## 🏆 High-Impact Features To Add Next
-
-- **Role-Based Dashboards**: Separate views for Doctor, Nurse, Reception, and Admin with permission-scoped actions.
-- **Smart Clinical Alerts**: Flag allergy conflicts, missed follow-ups, and high-risk vitals using configurable rules.
-- **EMR Timeline View**: Unified chronological timeline for visits, prescriptions, labs, and notes.
-- **E-Prescription Module**: Generate printable and digital prescriptions with dosage validation checks.
-- **Lab & Diagnostic Integration**: Upload reports, track test status, and attach results to patient records.
-- **Offline-First Support**: Continue capturing patient data during network issues and sync automatically later.
-- **Analytics Command Center**: KPIs for patient load, revisit rates, pending tests, and care quality metrics.
-- **Audit Log & Compliance Pack**: Track every data change with user/time/IP metadata for compliance readiness.
+- Deeper role-specific dashboards
+- Clinical alerts and rules engine
+- EMR-style timeline across visits, labs, meds
+- E-prescribing and lab integrations
+- Offline sync for unstable networks
+- Audit log for compliance
 
 ---
 
-**SehatSync** - Empowering healthcare professionals with better patient management tools.
+**SehatSync** — outpatient-style registry and encounter tooling for demos and small deployments.

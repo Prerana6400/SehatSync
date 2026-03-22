@@ -1,272 +1,150 @@
-import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Users, Loader, RefreshCcw, ClipboardList, CalendarClock } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { Plus, Users, Loader } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import PatientCard from "@/components/PatientCard";
 import PatientModal from "@/components/PatientModal";
-import AddPatientForm from "@/components/AddPatientForm";
-import { Patient } from "@/types/patient";
-import { useToast } from "@/hooks/use-toast";
+import { PatientFormModal } from "@/components/PatientFormModal";
+import { SearchBar } from "@/components/SearchBar";
+import type { Patient } from "@/types/patient";
+import { apiFetch } from "@/lib/api";
 
 const Patients = () => {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
-  const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<"add" | "edit">("add");
+  const [editPatient, setEditPatient] = useState<Patient | null>(null);
 
-  // Map JSONPlaceholder user to Patient type while preserving existing UI needs
-  const mapUserToPatient = (user: any): Patient => {
-    const fullAddress = user?.address
-      ? `${user.address.street}, ${user.address.suite}, ${user.address.city}, ${user.address.zipcode}`
-      : "";
-    const randomAge =  twentyToSeventy(user?.id);
-    const gender = (user?.id ?? 0) % 2 === 0 ? "male" : "female";
-    const lastVisit = randomRecentDate(user?.id);
+  const {
+    data: patients = [],
+    isLoading: patientsLoading,
+    isError: patientsError,
+    error: patientsErrorObj,
+    refetch: refetchPatients,
+  } = useQuery({
+    queryKey: ["patients"],
+    queryFn: () => apiFetch<Patient[]>("/api/patients"),
+  });
 
-    return {
-      id: user.id,
-      name: user.name,
-      age: randomAge,
-      contact: user.phone ?? "",
-      email: user.email ?? "",
-      address: fullAddress,
-      gender,
-      bloodType: undefined,
-      emergencyContact: user.phone ? `Primary EC - ${user.phone}` : undefined,
-      medicalHistory: "No significant medical history on file.",
-      lastVisit,
-    };
-  };
-
-  // Stable pseudo-random helpers based on id for consistent UI
-  const twentyToSeventy = (seed: number = 1) => 20 + ((seed * 37) % 51);
-  const randomRecentDate = (seed: number = 1) => {
-    const daysAgo = (seed * 13) % 28;
-    const d = new Date();
-    d.setDate(d.getDate() - daysAgo);
-    return d.toISOString().slice(0, 10);
-  };
-
-  // Mock patient data with medical information
-  const mockPatients: Patient[] = [
-    {
-      id: 1,
-      name: "John Smith",
-      age: 45,
-      contact: "+1 (555) 0123",
-      email: "john.smith@email.com",
-      address: "123 Main St, Springfield, IL 62701",
-      gender: "male",
-      bloodType: "A+",
-      emergencyContact: "Jane Smith - Wife - +1 (555) 0124",
-      medicalHistory: "Hypertension, managed with medication. Regular checkups every 6 months.",
-      lastVisit: "2024-01-15"
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      age: 32,
-      contact: "+1 (555) 0456",
-      email: "sarah.johnson@email.com",
-      address: "456 Oak Ave, Chicago, IL 60601",
-      gender: "female",
-      bloodType: "O-",
-      emergencyContact: "Mike Johnson - Husband - +1 (555) 0457",
-      medicalHistory: "Allergic to penicillin. Previous surgery: Appendectomy (2019)",
-      lastVisit: "2024-01-22"
-    },
-    {
-      id: 3,
-      name: "Michael Brown",
-      age: 67,
-      contact: "+1 (555) 0789",
-      email: "michael.brown@email.com",
-      address: "789 Pine Rd, Milwaukee, WI 53201",
-      gender: "male",
-      bloodType: "B+",
-      emergencyContact: "Lisa Brown - Daughter - +1 (555) 0790",
-      medicalHistory: "Type 2 diabetes, managed with diet and medication. Regular eye exams.",
-      lastVisit: "2024-01-10"
-    },
-    {
-      id: 4,
-      name: "Emily Davis",
-      age: 28,
-      contact: "+1 (555) 1012",
-      email: "emily.davis@email.com",
-      address: "321 Elm St, Detroit, MI 48201",
-      gender: "female",
-      bloodType: "AB+",
-      emergencyContact: "Tom Davis - Brother - +1 (555) 1013",
-      medicalHistory: "No significant medical history. Annual wellness checkups.",
-      lastVisit: "2024-01-18"
-    },
-    {
-      id: 5,
-      name: "Robert Wilson",
-      age: 54,
-      contact: "+1 (555) 1314",
-      email: "robert.wilson@email.com",
-      address: "654 Maple Dr, Columbus, OH 43201",
-      gender: "male",
-      bloodType: "O+",
-      emergencyContact: "Helen Wilson - Wife - +1 (555) 1315",
-      medicalHistory: "History of heart disease. Takes medication for cholesterol.",
-      lastVisit: "2024-01-25"
-    },
-    {
-      id: 6,
-      name: "Jennifer Lee",
-      age: 41,
-      contact: "+1 (555) 1516",
-      email: "jennifer.lee@email.com",
-      address: "987 Cedar Ln, Nashville, TN 37201",
-      gender: "female",
-      bloodType: "A-",
-      emergencyContact: "David Lee - Husband - +1 (555) 1517",
-      medicalHistory: "Asthma, uses inhaler as needed. No other significant conditions.",
-      lastVisit: "2024-01-12"
-    }
-  ];
-
-  // Fetch from public API with graceful fallback to mock data
-  useEffect(() => {
-    const fetchPatients = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        // Small UX delay
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        const response = await fetch("https://jsonplaceholder.typicode.com/users");
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-        const users = await response.json();
-        const mapped: Patient[] = (users as any[]).map(mapUserToPatient);
-
-        setPatients(mapped);
-        setFilteredPatients(mapped);
-        toast({
-          title: "Patients Loaded",
-          description: `Loaded ${mapped.length} patient records from public API.`,
-        });
-      } catch (err) {
-        // Fallback to local mock data to keep UI functional
-        setPatients(mockPatients);
-        setFilteredPatients(mockPatients);
-        setError(null);
-        toast({
-          title: "Using Fallback Data",
-          description: "Public API unavailable. Loaded local sample patients instead.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPatients();
-  }, [toast]);
-
-  // Handle search
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredPatients(patients);
-    } else {
-      const filtered = patients.filter(patient =>
-        patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        patient.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        patient.contact.includes(searchQuery)
-      );
-      setFilteredPatients(filtered);
-    }
+  const filteredPatients = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const qRaw = searchQuery.trim();
+    if (!q) return patients;
+    return patients.filter((patient) => {
+      if (patient.name.toLowerCase().includes(q)) return true;
+      if (patient.contact.replace(/\s/g, "").includes(qRaw.replace(/\s/g, ""))) return true;
+      if (String(patient.id).includes(qRaw) || String(patient.id) === qRaw) return true;
+      return false;
+    });
   }, [searchQuery, patients]);
 
-  // Listen for add patient event from navigation
   useEffect(() => {
-    const handleOpenAddPatient = () => setIsAddPatientOpen(true);
-    
-    window.addEventListener('openAddPatient', handleOpenAddPatient);
-    return () => window.removeEventListener('openAddPatient', handleOpenAddPatient);
-  }, []);
+    const openId = searchParams.get("open");
+    if (openId) {
+      const id = Number.parseInt(openId, 10);
+      if (!Number.isNaN(id)) {
+        setSelectedPatientId(id);
+        setIsPatientModalOpen(true);
+      }
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const st = location.state as { openAdd?: boolean } | null;
+    if (st?.openAdd) {
+      setFormMode("add");
+      setEditPatient(null);
+      setFormOpen(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleViewDetails = (patient: Patient) => {
-    setSelectedPatient(patient);
+    setSelectedPatientId(patient.id);
     setIsPatientModalOpen(true);
   };
 
-  const handleAddPatient = (newPatientData: Omit<Patient, 'id'>) => {
-    const newPatient: Patient = {
-      ...newPatientData,
-      id: Math.max(...patients.map(p => p.id), 0) + 1
-    };
-    
-    setPatients(prev => [newPatient, ...prev]);
-  };
-
-  const handleRetry = () => {
-    window.location.reload();
-  };
-
-  const analytics = useMemo(() => {
-    const now = new Date();
-    const msInDay = 1000 * 60 * 60 * 24;
-
-    const patientsWithVisitDate = patients.filter((patient) => patient.lastVisit);
-    const revisitCandidates = patients.filter((patient) => patient.id % 3 !== 0);
-    const revisitRate = patients.length === 0
-      ? 0
-      : Math.round((revisitCandidates.length / patients.length) * 100);
-
-    const pendingFollowUps = patientsWithVisitDate.filter((patient) => {
-      const lastVisitDate = new Date(patient.lastVisit as string);
-      const daysSinceVisit = Math.floor((now.getTime() - lastVisitDate.getTime()) / msInDay);
-      return daysSinceVisit > 30;
+  const handleClosePatientModal = () => {
+    setIsPatientModalOpen(false);
+    setSelectedPatientId(null);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("open");
+      return next;
     });
+  };
 
-    const incompleteProfiles = patients.filter(
-      (patient) => !patient.bloodType || !patient.emergencyContact
-    );
-    const pendingActions = pendingFollowUps.length + incompleteProfiles.length;
+  const handleOpenAdd = () => {
+    setFormMode("add");
+    setEditPatient(null);
+    setFormOpen(true);
+  };
 
-    return {
-      patientVolume: patients.length,
-      revisitRate,
-      pendingActions,
-      pendingFollowUps,
-      incompleteProfiles,
-    };
-  }, [patients]);
+  const handleEdit = (patient: Patient) => {
+    setFormMode("edit");
+    setEditPatient(patient);
+    setFormOpen(true);
+  };
 
-  if (isLoading) {
+  const handleFormSubmit = async (
+    data: Omit<Patient, "id" | "visits" | "visitCount"> & { id?: number }
+  ) => {
+    if (data.id != null) {
+      const { id, ...rest } = data;
+      await apiFetch(`/api/patients/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          ...rest,
+          allergies: rest.allergies || undefined,
+        }),
+      });
+    } else {
+      await apiFetch("/api/patients", {
+        method: "POST",
+        body: JSON.stringify({
+          ...data,
+          allergies: data.allergies || undefined,
+        }),
+      });
+    }
+    await queryClient.invalidateQueries({ queryKey: ["patients"] });
+    await queryClient.invalidateQueries({ queryKey: ["analytics", "overview"] });
+    await queryClient.invalidateQueries({ queryKey: ["dashboard", "overview"] });
+    await queryClient.invalidateQueries({ queryKey: ["alerts", "overview"] });
+  };
+
+  if (patientsLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Loading Patient Records</h2>
-          <p className="text-muted-foreground">Please wait while we fetch the latest patient data...</p>
+          <h2 className="text-xl font-semibold mb-2">Loading patient records</h2>
+          <p className="text-muted-foreground">Fetching the latest patient data…</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (patientsError) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="bg-destructive/10 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
             <Users className="h-8 w-8 text-destructive" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">Unable to Load Patients</h2>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <Button onClick={handleRetry}>Try Again</Button>
+          <h2 className="text-xl font-semibold mb-2">Unable to load patients</h2>
+          <p className="text-muted-foreground mb-4">
+            {patientsErrorObj instanceof Error ? patientsErrorObj.message : "Something went wrong"}
+          </p>
+          <Button onClick={() => void refetchPatients()}>Try again</Button>
         </div>
       </div>
     );
@@ -275,155 +153,62 @@ const Patients = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Patient Records</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Patient records</h1>
             <p className="text-muted-foreground">
-              Manage and view all patient information in one place
+              Search by name, patient ID, or phone. Cards show MRN, demographics, and last visit.
             </p>
           </div>
-          <Button onClick={() => setIsAddPatientOpen(true)} className="flex items-center">
+          <Button onClick={handleOpenAdd} className="flex items-center">
             <Plus className="h-4 w-4 mr-2" />
-            Add New Patient
+            Add patient
           </Button>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
+          <Card className="border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
+              <CardTitle className="text-sm font-medium">Total patients</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{patients.length}</div>
-              <p className="text-xs text-muted-foreground">Active patient records</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recent Visits</CardTitle>
-              <Badge variant="secondary">This Month</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{patients.filter(p => p.lastVisit).length}</div>
-              <p className="text-xs text-muted-foreground">Patients with recent visits</p>
+              <p className="text-xs text-muted-foreground">Active records</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Search Results</CardTitle>
-              <Search className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Matching search</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{filteredPatients.length}</div>
               <p className="text-xs text-muted-foreground">
-                {searchQuery ? `Matching "${searchQuery}"` : "All patients"}
+                {searchQuery.trim() ? `Filter: "${searchQuery.trim()}"` : "All patients"}
               </p>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Analytics Command Center */}
-        <div className="mb-8">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-foreground">Analytics Command Center</h2>
-            <p className="text-muted-foreground">
-              Track patient volume, revisit rate, and pending care actions in real time
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <Card className="border-primary/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Patient Volume</CardTitle>
-                <Users className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.patientVolume}</div>
-                <p className="text-xs text-muted-foreground">Total active records</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-primary/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Revisit Rate</CardTitle>
-                <RefreshCcw className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.revisitRate}%</div>
-                <p className="text-xs text-muted-foreground">Estimated return patient ratio</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-primary/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Actions</CardTitle>
-                <ClipboardList className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.pendingActions}</div>
-                <p className="text-xs text-muted-foreground">Follow-ups and profile updates due</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Priority Action Queue</CardTitle>
+          <Card className="border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Quick link</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {analytics.pendingFollowUps.slice(0, 3).map((patient) => (
-                <div
-                  key={`followup-${patient.id}`}
-                  className="flex items-center justify-between rounded-md border p-3"
-                >
-                  <div>
-                    <p className="font-medium">{patient.name}</p>
-                    <p className="text-sm text-muted-foreground">Follow-up overdue</p>
-                  </div>
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    <CalendarClock className="h-3.5 w-3.5" />
-                    Follow-up
-                  </Badge>
-                </div>
-              ))}
-
-              {analytics.incompleteProfiles.slice(0, 2).map((patient) => (
-                <div
-                  key={`profile-${patient.id}`}
-                  className="flex items-center justify-between rounded-md border p-3"
-                >
-                  <div>
-                    <p className="font-medium">{patient.name}</p>
-                    <p className="text-sm text-muted-foreground">Complete blood type or emergency contact</p>
-                  </div>
-                  <Badge variant="outline">Profile Pending</Badge>
-                </div>
-              ))}
-
-              {analytics.pendingActions === 0 && (
-                <p className="text-sm text-muted-foreground">No pending actions right now.</p>
-              )}
+            <CardContent>
+              <Button variant="outline" size="sm" className="w-full" asChild>
+                <Link to="/analytics">Patient analytics</Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search patients by name, email, or phone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search by name, patient ID, or phone…"
+          className="mb-8"
+        />
 
-        {/* Patient Grid */}
         {filteredPatients.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPatients.map((patient) => (
@@ -431,47 +216,48 @@ const Patients = () => {
                 key={patient.id}
                 patient={patient}
                 onViewDetails={handleViewDetails}
+                onEdit={handleEdit}
               />
             ))}
           </div>
         ) : (
           <div className="text-center py-16">
             <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No Patients Found</h3>
+            <h3 className="text-xl font-semibold mb-2">No patients found</h3>
             <p className="text-muted-foreground mb-4">
-              {searchQuery 
-                ? `No patients match your search for "${searchQuery}"`
-                : "No patients have been added yet"
-              }
+              {searchQuery.trim()
+                ? `No patients match "${searchQuery.trim()}"`
+                : "No patients have been added yet"}
             </p>
-            {searchQuery ? (
+            {searchQuery.trim() ? (
               <Button variant="outline" onClick={() => setSearchQuery("")}>
-                Clear Search
+                Clear search
               </Button>
             ) : (
-              <Button onClick={() => setIsAddPatientOpen(true)}>
+              <Button onClick={handleOpenAdd}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add First Patient
+                Add first patient
               </Button>
             )}
           </div>
         )}
       </div>
 
-      {/* Modals */}
       <PatientModal
-        patient={selectedPatient}
+        patientId={selectedPatientId}
         isOpen={isPatientModalOpen}
-        onClose={() => {
-          setIsPatientModalOpen(false);
-          setSelectedPatient(null);
-        }}
+        onClose={handleClosePatientModal}
       />
-      
-      <AddPatientForm
-        isOpen={isAddPatientOpen}
-        onClose={() => setIsAddPatientOpen(false)}
-        onAddPatient={handleAddPatient}
+
+      <PatientFormModal
+        open={formOpen}
+        onClose={() => {
+          setFormOpen(false);
+          setEditPatient(null);
+        }}
+        mode={formMode}
+        initialPatient={formMode === "edit" ? editPatient : null}
+        onSubmit={handleFormSubmit}
       />
     </div>
   );

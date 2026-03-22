@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 interface AddPatientFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddPatient: (patient: Omit<Patient, 'id'>) => void;
+  onAddPatient: (patient: Omit<Patient, "id">) => Promise<void>;
 }
 
 const AddPatientForm = ({ isOpen, onClose, onAddPatient }: AddPatientFormProps) => {
@@ -24,13 +24,14 @@ const AddPatientForm = ({ isOpen, onClose, onAddPatient }: AddPatientFormProps) 
     address: "",
     gender: "",
     bloodType: "",
+    allergies: "",
     emergencyContact: "",
     medicalHistory: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.age || !formData.contact || !formData.email) {
       toast({
         title: "Missing Information",
@@ -40,30 +41,39 @@ const AddPatientForm = ({ isOpen, onClose, onAddPatient }: AddPatientFormProps) 
       return;
     }
 
-    const newPatient: Omit<Patient, 'id'> = {
+    const newPatient: Omit<Patient, "id"> = {
       ...formData,
-      age: parseInt(formData.age),
-      lastVisit: new Date().toLocaleDateString(),
+      age: parseInt(formData.age, 10),
+      allergies: formData.allergies.trim() || undefined,
+      lastVisit: new Date().toISOString().slice(0, 10),
     };
 
-    onAddPatient(newPatient);
-    setFormData({
-      name: "",
-      age: "",
-      contact: "",
-      email: "",
-      address: "",
-      gender: "",
-      bloodType: "",
-      emergencyContact: "",
-      medicalHistory: "",
-    });
-    onClose();
-    
-    toast({
-      title: "Patient Added",
-      description: "New patient has been successfully added to the system.",
-    });
+    try {
+      await onAddPatient(newPatient);
+      setFormData({
+        name: "",
+        age: "",
+        contact: "",
+        email: "",
+        address: "",
+        gender: "",
+        bloodType: "",
+        allergies: "",
+        emergencyContact: "",
+        medicalHistory: "",
+      });
+      onClose();
+      toast({
+        title: "Patient Added",
+        description: "New patient has been successfully added to the system.",
+      });
+    } catch (err) {
+      toast({
+        title: "Could not add patient",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -182,12 +192,23 @@ const AddPatientForm = ({ isOpen, onClose, onAddPatient }: AddPatientFormProps) 
           </div>
 
           <div>
+            <Label htmlFor="allergies">Allergies</Label>
+            <Textarea
+              id="allergies"
+              value={formData.allergies}
+              onChange={(e) => handleInputChange("allergies", e.target.value)}
+              placeholder="Drug or environmental allergies, reactions (NKDA if none)"
+              rows={2}
+            />
+          </div>
+
+          <div>
             <Label htmlFor="medicalHistory">Medical History</Label>
             <Textarea
               id="medicalHistory"
               value={formData.medicalHistory}
               onChange={(e) => handleInputChange('medicalHistory', e.target.value)}
-              placeholder="Enter any relevant medical history"
+              placeholder="Chronic conditions, surgeries, ongoing medications"
               rows={3}
             />
           </div>

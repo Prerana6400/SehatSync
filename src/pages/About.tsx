@@ -1,139 +1,152 @@
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Building2, Loader2, UserCog, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Target, Users, Award, Mail, BookOpen, AlertCircle } from "lucide-react";
+import { publicFetch } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import type { Doctor } from "@/types/doctor";
+import type { StaffMember } from "@/types/staff";
+import { AboutHeader } from "@/components/about/AboutHeader";
+import { DoctorsGrid } from "@/components/about/DoctorsGrid";
+import { StaffTable } from "@/components/about/StaffTable";
+import { DoctorFormModal } from "@/components/about/DoctorFormModal";
+import { StaffFormModal } from "@/components/about/StaffFormModal";
 
 const About = () => {
-  const values = [
-    {
-      icon: Target,
-      title: "Patient safety first",
-      description:
-        "Charts highlight allergies and problem lists so the whole team sees critical context before documenting a new encounter.",
-    },
-    {
-      icon: Users,
-      title: "Built for small teams",
-      description:
-        "Reception can register patients; clinicians and nurses can add visits and notes with clear timestamps and provider labels.",
-    },
-    {
-      icon: Award,
-      title: "Operational clarity",
-      description:
-        "The analytics view surfaces volume, revisit patterns, and pending follow-ups—so managers can spot backlog without exporting spreadsheets.",
-    },
-  ];
+  const [showStaff, setShowStaff] = useState(false);
+  const [addDoctorOpen, setAddDoctorOpen] = useState(false);
+  const [addStaffOpen, setAddStaffOpen] = useState(false);
+
+  const { user, loading } = useAuth();
+  const canEdit = !loading && user?.role === "ADMIN";
+
+  const {
+    data: doctors,
+    isLoading: doctorsLoading,
+    isError: doctorsError,
+    error: doctorsErrorObj,
+  } = useQuery({
+    queryKey: ["about", "doctors"],
+    queryFn: () => publicFetch<Doctor[]>("/api/about/doctors"),
+  });
+
+  const {
+    data: staff,
+    isLoading: staffLoading,
+    isError: staffError,
+    error: staffErrorObj,
+  } = useQuery({
+    queryKey: ["about", "staff"],
+    queryFn: () => publicFetch<StaffMember[]>("/api/about/staff"),
+  });
+
+  const highlights = useMemo(
+    () => [
+      "Centralised patient records",
+      "Easy patient search and management",
+      "Appointment tracking",
+      "Smart alerts and follow-ups",
+    ],
+    [],
+  );
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <Activity className="h-16 w-16 text-primary" />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">About SehatSync</h1>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            SehatSync is an open, self-hosted style patient registry and encounter log for teaching, demos, and
-            small-practice pilots. It pairs a React dashboard with a Node API and PostgreSQL so you own the
-            data and can extend the schema as you grow.
-          </p>
-        </div>
-
-        <Card className="mb-8 border-amber-500/30 bg-amber-500/5">
-          <CardHeader className="flex flex-row items-start gap-3 space-y-0">
-            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <CardTitle className="text-lg">Important notice</CardTitle>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                This software is <strong>not</strong> a certified medical device and is <strong>not</strong>{" "}
-                a substitute for a full EHR or legal compliance with HIPAA, GDPR, or local healthcare rules.
-                Do not use real patient data until you have completed a proper security and compliance review
-                for your environment.
-              </p>
-            </div>
-          </CardHeader>
-        </Card>
-
-        <section className="mb-12">
-          <Card className="border-l-4 border-l-primary">
-            <CardHeader>
-              <CardTitle className="text-2xl">Mission</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
-                Give developers and clinic innovators a <strong>realistic</strong> foundation: authenticated
-                APIs, relational data, encounter history, and dashboards that behave like production tools—so
-                you can iterate on workflows instead of wiring mocks forever.
-              </p>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold text-center mb-8">Principles</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {values.map((value, index) => {
-              const Icon = value.icon;
-              return (
-                <Card key={index} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-center mb-3">
-                      <Icon className="h-10 w-10 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg text-center">{value.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{value.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="mb-12">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Stack &amp; documentation
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>
-                <strong className="text-foreground">Frontend:</strong> React, TypeScript, Vite, Tailwind,
-                shadcn/ui, TanStack Query.
-              </p>
-              <p>
-                <strong className="text-foreground">Backend:</strong> Express, Prisma, PostgreSQL, JWT auth
-                with role enums (admin, doctor, nurse, reception).
-              </p>
-              <p>
-                See the project <code className="text-xs bg-muted px-1 py-0.5 rounded">README.md</code> for
-                environment variables, database setup, and how to run API + UI together.
-              </p>
-            </CardContent>
-          </Card>
-        </section>
-
+      <div className="container mx-auto px-4 py-16 max-w-5xl space-y-12">
         <section>
-          <Card className="bg-primary/5">
-            <CardHeader>
-              <CardTitle className="text-xl text-center">Contact</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-2">
-              <div className="flex justify-center mb-2">
-                <Mail className="h-8 w-8 text-primary" />
-              </div>
-              <p className="text-muted-foreground text-sm">
-                Product inquiries: <span className="text-foreground">support@sehatsync.com</span>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Replace with your organization&apos;s support address when you fork or deploy this project.
-              </p>
-            </CardContent>
-          </Card>
+          <AboutHeader
+            title="About SehatSync"
+            description="SehatSync is a smart, centralised patient management dashboard that brings clinical data into one place, simplifies healthcare data workflows, and improves day-to-day efficiency for clinics. It helps teams reduce fragmented records by connecting patient profiles, visits, and operational alerts in a consistent system."
+            highlights={highlights}
+          />
+        </section>
+
+        <section className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Users className="h-6 w-6 text-primary" />
+              <h2 className="text-2xl font-bold">Doctors</h2>
+            </div>
+            {canEdit && (
+              <Button variant="outline" type="button" size="sm" onClick={() => setAddDoctorOpen(true)}>
+                Add Doctor
+              </Button>
+            )}
+          </div>
+
+          {doctorsLoading ? (
+            <div className="min-h-[120px] flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : doctorsError ? (
+            <Card className="border-border">
+              <CardContent className="py-8 text-muted-foreground">
+                {doctorsErrorObj instanceof Error ? doctorsErrorObj.message : "Could not load doctor profiles."}
+              </CardContent>
+            </Card>
+          ) : !doctors || doctors.length === 0 ? (
+            <Card className="border-border">
+              <CardContent className="py-8 text-muted-foreground">No doctors found in the database.</CardContent>
+            </Card>
+          ) : (
+            <DoctorsGrid doctors={doctors} />
+          )}
+        </section>
+
+        <section className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Building2 className="h-6 w-6 text-primary" />
+              <h2 className="text-2xl font-bold">Staff</h2>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {canEdit && (
+                <Button
+                  variant="outline"
+                  type="button"
+                  size="sm"
+                  onClick={() => setAddStaffOpen(true)}
+                >
+                  Add Staff
+                </Button>
+              )}
+              <Button variant="outline" type="button" onClick={() => setShowStaff((v) => !v)}>
+                {showStaff ? "Hide Staff" : "View Staff"}
+              </Button>
+            </div>
+          </div>
+
+          {showStaff && (
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <UserCog className="h-5 w-5" />
+                  Staff directory
+                </CardTitle>
+              </CardHeader>
+
+              {staffLoading ? (
+                <CardContent className="py-8 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </CardContent>
+              ) : staffError ? (
+                <CardContent className="py-8 text-muted-foreground">
+                  {staffErrorObj instanceof Error ? staffErrorObj.message : "Could not load staff records."}
+                </CardContent>
+              ) : !staff || staff.length === 0 ? (
+                <CardContent className="py-8 text-muted-foreground">No staff records found.</CardContent>
+              ) : (
+                <StaffTable staff={staff} canEdit={canEdit} />
+              )}
+            </Card>
+          )}
         </section>
       </div>
+
+      <DoctorFormModal open={addDoctorOpen} onClose={() => setAddDoctorOpen(false)} />
+      <StaffFormModal open={addStaffOpen} onClose={() => setAddStaffOpen(false)} />
     </div>
   );
 };

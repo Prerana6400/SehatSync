@@ -22,8 +22,9 @@ export type ApiUser = {
 export async function publicFetch<T = unknown>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`);
   if (!res.ok) {
-    const errBody = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(errBody.error ?? `Request failed (${res.status})`);
+    const errBody = (await res.json().catch(() => ({}))) as { error?: string; detail?: string };
+    const msg = [errBody.error, errBody.detail].filter(Boolean).join(" — ");
+    throw new Error(msg || `Request failed (${res.status})`);
   }
   return res.json() as Promise<T>;
 }

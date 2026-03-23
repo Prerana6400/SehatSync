@@ -47,6 +47,38 @@ model Patient {
   @@index([name])
 }
 
+enum StaffStatus {
+  ACTIVE
+  ON_LEAVE
+}
+
+model Doctor {
+  id               Int       @id @default(autoincrement())
+  name             String
+  specialization   String
+  availableDays   String[]
+  description      String?
+  yearsExperience  Int?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([name])
+}
+
+model Staff {
+  id             Int          @id @default(autoincrement())
+  name           String
+  role           String
+  department    String
+  contactNumber String
+  status         StaffStatus @default(ACTIVE)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([department])
+  @@index([name])
+}
+
 enum AppointmentStatus {
   SCHEDULED
   CONFIRMED

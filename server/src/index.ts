@@ -8,6 +8,7 @@ import { publicRouter } from "./routes/public.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { appointmentsRouter } from "./routes/appointments.js";
 import { alertsRouter } from "./routes/alerts.js";
+import { aboutRouter } from "./routes/about.js";
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 
@@ -32,6 +33,7 @@ app.use("/api/patients", patientsRouter);
 app.use("/api/appointments", appointmentsRouter);
 app.use("/api/alerts", alertsRouter);
 app.use("/api/analytics", analyticsRouter);
+app.use("/api/about", aboutRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });

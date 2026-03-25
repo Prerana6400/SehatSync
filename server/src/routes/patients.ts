@@ -8,6 +8,7 @@ import {
   toPatientListDTO,
 } from "../lib/patient-mapper.js";
 import { authenticate, requireRole, type AuthedRequest } from "../middleware/auth.js";
+import { sendWhatsApp } from "../utils/sendWhatsapp.js";
 
 export const patientsRouter = Router();
 
@@ -97,6 +98,11 @@ patientsRouter.post("/", authenticate, requireRole(...canWrite), async (req, res
       lastVisit: lastVisit === undefined ? new Date() : lastVisit,
     },
   });
+  await sendWhatsApp(
+  patient.contact,
+  `Hello ${patient.name}, your registration is successful!`
+);
+
   res.status(201).json(toPatientDTO(patient));
 });
 

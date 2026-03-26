@@ -53,7 +53,7 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-16 max-w-5xl space-y-12">
+      <div className="container mx-auto px-4 py-12 max-w-7xl space-y-10">
         <section>
           <AboutHeader
             title="About SehatSync"

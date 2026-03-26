@@ -83,6 +83,22 @@ dashboardRouter.get("/overview", authenticate, async (_req: AuthedRequest, res, 
     });
   }
 
+  const weeklyVisits: { date: string; count: number }[] = [];
+  const msWeek = 7 * msDay;
+  for (let i = 3; i >= 0; i--) {
+    const rawWeekStart = new Date(now.getTime() - i * msWeek);
+    const weekStart = startOfWeek(rawWeekStart);
+    const weekEnd = new Date(weekStart.getTime() + msWeek - 1);
+
+    const count = await prisma.clinicalVisit.count({
+      where: { visitDate: { gte: weekStart, lte: weekEnd } },
+    });
+    weeklyVisits.push({
+      date: weekStart.toISOString().slice(0, 10),
+      count,
+    });
+  }
+
   const followUpsScheduled = await prisma.appointment.count({
     where: {
       status: { in: [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED] },
@@ -111,6 +127,7 @@ dashboardRouter.get("/overview", authenticate, async (_req: AuthedRequest, res, 
       incompleteProfiles: incompleteProfiles.length,
     },
     activity: {
+      weeklyVisitsLast4Weeks: weeklyVisits,
       dailyVisitsLast7Days: dailyVisits,
       followUpsScheduledNext7Days: followUpsScheduled,
     },

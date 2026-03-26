@@ -20,6 +20,8 @@ model User {
   passwordHash String
   role         Role     @default(RECEPTION)
   createdAt    DateTime @default(now())
+
+  appointmentEvents AppointmentEvent[]
 }
 
 model Patient {
@@ -42,6 +44,9 @@ model Patient {
   updatedAt        DateTime  @updatedAt
   visits           ClinicalVisit[]
   appointments     Appointment[]
+
+  appointmentRequests         AppointmentRequest[]
+  appointmentRescheduleRequests AppointmentRescheduleRequest[]
 
   @@index([email])
   @@index([name])
@@ -87,6 +92,28 @@ enum AppointmentStatus {
   NO_SHOW
 }
 
+enum AppointmentRequestStatus {
+  PENDING
+  FULFILLED
+  CANCELLED
+}
+
+enum AppointmentRescheduleRequestStatus {
+  PENDING
+  FULFILLED
+  CANCELLED
+}
+
+enum AppointmentEventType {
+  CREATED
+  CONFIRMED
+  CANCELLED
+  RESCHEDULE_REQUESTED
+  RESCHEDULED
+  COMPLETED
+  NO_SHOW
+}
+
 model Appointment {
   id         Int               @id @default(autoincrement())
   patientId  Int
@@ -99,9 +126,68 @@ model Appointment {
   createdAt  DateTime          @default(now())
   updatedAt DateTime         @updatedAt
 
+  events   AppointmentEvent[]
+  requests AppointmentRequest[]
+  rescheduleRequests AppointmentRescheduleRequest[]
+
   @@index([patientId])
   @@index([startAt])
   @@index([status])
+}
+
+model AppointmentRequest {
+  id        Int                     @id @default(autoincrement())
+  patientId Int
+  patient   Patient                 @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  weekStart DateTime
+  weekEnd   DateTime
+
+  status    AppointmentRequestStatus @default(PENDING)
+
+  // The appointment created after admin fulfills the request.
+  fulfilledAppointmentId Int?
+  fulfilledAppointment   Appointment? @relation(fields: [fulfilledAppointmentId], references: [id], onDelete: SetNull)
+
+  // Useful for inbound flows where we only have the phone number initially.
+  requesterContact String?
+  message          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AppointmentRescheduleRequest {
+  id         Int                                  @id @default(autoincrement())
+  patientId  Int
+  patient    Patient                              @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  appointmentId Int?
+  appointment   Appointment?                      @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  status            AppointmentRescheduleRequestStatus @default(PENDING)
+
+  // Admin will pick a new slot; store requested context here.
+  message           String?
+  requesterContact  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AppointmentEvent {
+  id            Int              @id @default(autoincrement())
+  appointmentId Int
+  appointment   Appointment     @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  type   AppointmentEventType
+  notes  String?
+
+  // Who initiated the change (admin/doctor/reception). For inbound flows, this can stay null.
+  actorUserId Int?
+  actorUser   User?            @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
 }
 
 model ClinicalVisit {

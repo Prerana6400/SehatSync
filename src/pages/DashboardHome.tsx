@@ -1,5 +1,7 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { format, startOfDay, endOfDay } from "date-fns";
 import {
   Users,
   UserPlus,
@@ -20,32 +22,42 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { appointmentStatusVariant } from "@/components/AppointmentTable";
 import { DashboardCard } from "@/components/DashboardCard";
 import { apiFetch } from "@/lib/api";
+import type { AppointmentRow } from "@/types/appointment";
 import type { DashboardOverview } from "@/types/dashboard";
-import { formatVisitDate } from "@/lib/format";
 
 const DashboardHome = () => {
-  const navigate = useNavigate();
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["dashboard", "overview"],
     queryFn: () => apiFetch<DashboardOverview>("/api/dashboard/overview"),
   });
+  const todayStart = startOfDay(new Date()).toISOString();
+  const todayEnd = endOfDay(new Date()).toISOString();
+  const { data: todaysAppointments = [] } = useQuery({
+    queryKey: ["appointments", "today", todayStart, todayEnd],
+    queryFn: () =>
+      apiFetch<AppointmentRow[]>(
+        `/api/appointments?from=${encodeURIComponent(todayStart)}&to=${encodeURIComponent(todayEnd)}`
+      ),
+  });
+
+  const [chartRange, setChartRange] = useState<"weekly" | "daily">("weekly");
 
   const chartData =
-    data?.activity.dailyVisitsLast7Days.map((d) => ({
-      label: d.date.slice(5),
-      visits: d.count,
-    })) ?? [];
+    (chartRange === "daily"
+      ? data?.activity.dailyVisitsLast7Days.map((d) => ({
+          label: d.date.slice(5),
+          visits: d.count,
+        }))
+      : data?.activity.weeklyVisitsLast4Weeks.map((w) => ({
+          label: w.date.slice(5),
+          visits: w.count,
+        }))) ?? [];
 
   if (isLoading) {
     return (
@@ -68,7 +80,7 @@ const DashboardHome = () => {
     );
   }
 
-  const { stats, activity, recentPatients } = data;
+  const { stats, activity } = data;
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,10 +122,21 @@ const DashboardHome = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2 border-border">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Activity className="h-5 w-5 text-primary" />
-                Daily patient visits (last 7 days)
-              </CardTitle>
+              <div className="flex items-start sm:items-center justify-between gap-4 flex-wrap">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Activity className="h-5 w-5 text-primary" />
+                  {chartRange === "daily"
+                    ? "Daily patient visits (last 7 days)"
+                    : "Weekly patient visits (last 4 weeks)"}
+                </CardTitle>
+
+                <Tabs value={chartRange} onValueChange={(v) => setChartRange(v as "weekly" | "daily")}>
+                  <TabsList>
+                    <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                    <TabsTrigger value="daily">Daily</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
             </CardHeader>
             <CardContent className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -154,46 +177,30 @@ const DashboardHome = () => {
 
         <Card className="border-border">
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="text-lg">Recent patients</CardTitle>
+            <CardTitle className="text-lg">Today's appointments</CardTitle>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/patients">View all records</Link>
+              <Link to="/appointments">Open appointments</Link>
             </Button>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Age</TableHead>
-                  <TableHead>Medical condition</TableHead>
-                  <TableHead>Last visit</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentPatients.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-muted-foreground text-center">
-                      No patients yet
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  recentPatients.map((p) => (
-                    <TableRow
-                      key={p.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/patients?open=${p.id}`)}
-                    >
-                      <TableCell className="font-medium">{p.name}</TableCell>
-                      <TableCell>{p.age}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{p.medicalCondition}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {p.lastVisit ? formatVisitDate(p.lastVisit) : "—"}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <CardContent className="space-y-3">
+            {todaysAppointments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No appointments scheduled for today.</p>
+            ) : (
+              todaysAppointments.slice(0, 6).map((a) => (
+                <div
+                  key={a.id}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-border p-3"
+                >
+                  <div className="space-y-0.5">
+                    <p className="font-medium">{a.patientName}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {a.doctorName} · {format(new Date(a.startAt), "h:mm a")}
+                    </p>
+                  </div>
+                  <Badge variant={appointmentStatusVariant[a.status]}>{a.status}</Badge>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 

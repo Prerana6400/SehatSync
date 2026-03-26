@@ -16,20 +16,24 @@ type DoctorCardProps = {
 
 export function DoctorCard({ doctor }: DoctorCardProps) {
   return (
-    <Card className="border-border h-full">
-      <CardHeader className="pb-3">
+    <Card className="border-border h-full flex flex-col">
+      <CardHeader className="pb-2">
         <div className="flex items-start gap-3">
           <Avatar className="h-11 w-11">
             <AvatarFallback>{getInitials(doctor.name)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
             <CardTitle className="text-lg truncate">{doctor.name}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">{doctor.specialization}</p>
+            <div className="mt-1">
+              <Badge variant="outline" className="font-normal">
+                {doctor.specialization}
+              </Badge>
+            </div>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="flex-1 space-y-4">
         <div className="space-y-2">
           <p className="text-sm font-medium">Availability</p>
           <div className="flex flex-wrap gap-2">
@@ -41,16 +45,20 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
           </div>
         </div>
 
-        {doctor.yearsExperience != null && (
-          <p className="text-sm text-muted-foreground">
-            {doctor.yearsExperience} years experience
-          </p>
-        )}
+        {(doctor.yearsExperience != null || doctor.description) && (
+          <div className="space-y-2">
+            {doctor.yearsExperience != null && (
+              <Badge variant="secondary" className="font-normal w-fit">
+                {doctor.yearsExperience} years experience
+              </Badge>
+            )}
 
-        {doctor.description ? (
-          <p className="text-sm text-muted-foreground leading-relaxed">{doctor.description}</p>
-        ) : (
-          <p className="text-sm text-muted-foreground">No description provided.</p>
+            {doctor.description ? (
+              <p className="text-sm text-muted-foreground leading-relaxed">{doctor.description}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">No description provided.</p>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

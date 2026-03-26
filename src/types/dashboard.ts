@@ -6,6 +6,7 @@ export type DashboardOverview = {
     incompleteProfiles: number;
   };
   activity: {
+    weeklyVisitsLast4Weeks: { date: string; count: number }[];
     dailyVisitsLast7Days: { date: string; count: number }[];
     followUpsScheduledNext7Days: number;
   };

@@ -28,7 +28,7 @@ type AppointmentTableProps = {
   loading: boolean;
   onReschedule: (a: AppointmentRow) => void;
   onCancel: (id: number) => void;
-  onRemove: (id: number) => void;
+  emptyStateText?: string;
 };
 
 export function AppointmentTable({
@@ -36,7 +36,7 @@ export function AppointmentTable({
   loading,
   onReschedule,
   onCancel,
-  onRemove,
+  emptyStateText,
 }: AppointmentTableProps) {
   if (loading) {
     return (
@@ -61,7 +61,7 @@ export function AppointmentTable({
         {appointments.length === 0 ? (
           <TableRow>
             <TableCell colSpan={5} className="text-center text-muted-foreground">
-              No appointments this month
+              {emptyStateText ?? "No appointments"}
             </TableCell>
           </TableRow>
         ) : (
@@ -86,9 +86,6 @@ export function AppointmentTable({
                     </Button>
                   </>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => onRemove(a.id)}>
-                  Remove
-                </Button>
               </TableCell>
             </TableRow>
           ))

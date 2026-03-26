@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   startOfMonth,
@@ -36,6 +36,11 @@ import { AppointmentTable } from "@/components/AppointmentTable";
 const Appointments = () => {
   const queryClient = useQueryClient();
   const [viewMonth, setViewMonth] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [rescheduleTarget, setRescheduleTarget] = useState<AppointmentRow | null>(null);
@@ -45,6 +50,8 @@ const Appointments = () => {
   const [doctorName, setDoctorName] = useState("");
   const [dateStr, setDateStr] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const [timeStr, setTimeStr] = useState("09:00");
+
+  const selectedKey = format(selectedDate, "yyyy-MM-dd");
 
   const from = startOfMonth(viewMonth).toISOString();
   const to = endOfMonth(viewMonth).toISOString();
@@ -69,6 +76,14 @@ const Appointments = () => {
     return m;
   }, [appointments]);
 
+  const selectedAppointments = useMemo(() => {
+    return appointments.filter((a) => format(new Date(a.startAt), "yyyy-MM-dd") === selectedKey);
+  }, [appointments, selectedKey]);
+
+  useEffect(() => {
+    if (!modalOpen) setDateStr(selectedKey);
+  }, [selectedKey, modalOpen]);
+
   const monthStart = startOfMonth(viewMonth);
   const monthDays = eachDayOfInterval({
     start: monthStart,
@@ -88,11 +103,6 @@ const Appointments = () => {
         method: "PATCH",
         body: JSON.stringify({ status: "CANCELLED" }),
       }),
-    onSuccess: invalidateRelated,
-  });
-
-  const deleteMut = useMutation({
-    mutationFn: (id: number) => apiFetch(`/api/appointments/${id}`, { method: "DELETE" }),
     onSuccess: invalidateRelated,
   });
 
@@ -153,14 +163,19 @@ const Appointments = () => {
             <h1 className="text-3xl font-bold text-foreground">Appointments</h1>
             <p className="text-muted-foreground mt-1">Schedule and manage patient visits.</p>
           </div>
-          <Button onClick={() => setModalOpen(true)}>
+          <Button
+            onClick={() => {
+              setDateStr(selectedKey);
+              setModalOpen(true);
+            }}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Schedule appointment
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-1 border-border">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[calc(100vh-12rem)] items-stretch">
+          <Card className="lg:col-span-1 border-border h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-primary" />
@@ -171,7 +186,14 @@ const Appointments = () => {
                   variant="outline"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => setViewMonth((d) => subMonths(d, 1))}
+                  onClick={() => {
+                    const next = subMonths(viewMonth, 1);
+                    setViewMonth(next);
+                    const first = new Date(next);
+                    first.setDate(1);
+                    first.setHours(0, 0, 0, 0);
+                    setSelectedDate(first);
+                  }}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -179,13 +201,20 @@ const Appointments = () => {
                   variant="outline"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => setViewMonth((d) => addMonths(d, 1))}
+                  onClick={() => {
+                    const next = addMonths(viewMonth, 1);
+                    setViewMonth(next);
+                    const first = new Date(next);
+                    first.setDate(1);
+                    first.setHours(0, 0, 0, 0);
+                    setSelectedDate(first);
+                  }}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 overflow-auto">
               <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground mb-2">
                 {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
                   <div key={d} className="font-medium py-1">
@@ -201,38 +230,47 @@ const Appointments = () => {
                   const key = format(day, "yyyy-MM-dd");
                   const n = byDay.get(key) ?? 0;
                   const isToday = isSameDay(day, new Date());
+                  const isSelected = key === selectedKey;
                   return (
-                    <div
+                    <button
                       key={key}
+                      type="button"
+                      onClick={() => setSelectedDate(day)}
+                      aria-pressed={isSelected}
                       className={cn(
                         "aspect-square flex flex-col items-center justify-center rounded-md text-xs border border-transparent",
-                        isToday && "bg-primary/10 border-primary/30",
-                        n > 0 && "bg-secondary"
+                        isSelected && "bg-primary/10 border-primary/30 ring-1 ring-primary/20",
+                        !isSelected && isToday && "bg-primary/10 border-primary/30",
+                        !isSelected && n > 0 && "bg-secondary"
                       )}
                     >
                       <span>{format(day, "d")}</span>
                       {n > 0 && (
                         <span className="text-[10px] text-primary font-medium">{n} appt</span>
                       )}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-2 border-border overflow-hidden">
+          <Card className="lg:col-span-2 border-border h-full flex flex-col overflow-hidden">
             <CardHeader>
-              <CardTitle className="text-lg">This month</CardTitle>
+              <CardTitle className="text-lg">
+                Appointments · {format(selectedDate, "MMM d, yyyy")}
+              </CardTitle>
             </CardHeader>
-            <CardContent className="overflow-x-auto p-0 sm:p-6">
-              <AppointmentTable
-                appointments={appointments}
-                loading={isLoading}
-                onReschedule={openReschedule}
-                onCancel={(id) => cancelMut.mutate(id)}
-                onRemove={(id) => deleteMut.mutate(id)}
-              />
+            <CardContent className="flex-1 min-h-0 p-0 sm:p-6">
+              <div className="h-full overflow-auto">
+                <AppointmentTable
+                  appointments={selectedAppointments}
+                  loading={isLoading}
+                  onReschedule={openReschedule}
+                  onCancel={(id) => cancelMut.mutate(id)}
+                  emptyStateText={`No appointments on ${format(selectedDate, "MMM d, yyyy")}`}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>

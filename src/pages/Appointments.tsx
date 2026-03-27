@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api";
 import type { AppointmentRow } from "@/types/appointment";
+import type { Doctor } from "@/types/doctor";
 import type { Patient } from "@/types/patient";
 import { cn } from "@/lib/utils";
 import { AppointmentTable } from "@/components/AppointmentTable";
@@ -65,6 +66,11 @@ const Appointments = () => {
   const { data: patients = [] } = useQuery({
     queryKey: ["patients"],
     queryFn: () => apiFetch<Patient[]>("/api/patients"),
+  });
+
+  const { data: doctors = [] } = useQuery({
+    queryKey: ["about", "doctors"],
+    queryFn: () => apiFetch<Doctor[]>("/api/about/doctors"),
   });
 
   const byDay = useMemo(() => {
@@ -344,13 +350,24 @@ const Appointments = () => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="doc">Doctor</Label>
-              <Input
-                id="doc"
-                value={doctorName}
-                onChange={(e) => setDoctorName(e.target.value)}
-                required
-              />
+              <Label>Doctor</Label>
+              <Select value={doctorName} onValueChange={setDoctorName} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select doctor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {doctors.map((d) => (
+                    <SelectItem key={d.id} value={d.name}>
+                      {d.name} ({d.specialization})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {doctors.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Add doctors from About page to enable scheduling.
+                </p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

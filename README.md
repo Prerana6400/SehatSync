@@ -172,6 +172,47 @@ src/
 
 Typical options: static hosting (Vercel, Netlify, S3) for the Vite build, with `VITE_API_URL` pointing at the deployed API. Run the API on a Node host or container with `DATABASE_URL` and `JWT_SECRET` set for the target environment.
 
+### Render (single dynamic service)
+
+For a single URL dynamic deployment (frontend + backend together), deploy as one Render Web Service:
+
+- Root directory: repo root
+- Build command:
+
+  ```bash
+  npm install && npm install --prefix server && npm run build && npm run build --prefix server
+  ```
+
+- Start command:
+
+  ```bash
+  node server/dist/index.js
+  ```
+
+- Health check path: `/api/health`
+
+Required environment variables:
+
+- `DATABASE_URL` (Supabase pooled connection string with SSL)
+- `JWT_SECRET`
+- `CORS_ORIGIN` (Render app URL)
+- `SEED_ADMIN_EMAIL`
+- `SEED_ADMIN_PASSWORD`
+- `NODE_ENV=production`
+
+Optional (for WhatsApp):
+
+- `TWILIO_SID`
+- `TWILIO_AUTH`
+- `TWILIO_WHATSAPP_NUMBER`
+
+After first deploy, run once:
+
+```bash
+npm run db:push --prefix server
+npm run db:seed --prefix server
+```
+
 ## Security
 
 - Treat PHI according to your jurisdiction (e.g. HIPAA-style rules). This repo is a demo/MVP; harden auth, TLS, logging, and backups before production.

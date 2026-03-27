@@ -1,6 +1,9 @@
 import "./load-env.js";
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { existsSync } from "fs";
+import { fileURLToPath } from "url";
 import { authRouter } from "./routes/auth.js";
 import { patientsRouter } from "./routes/patients.js";
 import { analyticsRouter } from "./routes/analytics.js";
@@ -14,6 +17,10 @@ import { prisma } from "./lib/prisma.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
+const isProduction = process.env.NODE_ENV === "production";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.resolve(__dirname, "../../dist");
 
 const corsOrigin = process.env.CORS_ORIGIN?.split(",").map((s) => s.trim()) ?? true;
 
@@ -93,6 +100,21 @@ app.post("/webhook/whatsapp", async (req, res) => {
 
   res.send("OK");
 });
+
+// Keep unknown API endpoints explicit.
+app.use("/api", (_req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
+// In production, serve frontend from root/dist for single-service deployment.
+if (isProduction && existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+}
+
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
 });

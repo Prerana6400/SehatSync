@@ -11,8 +11,13 @@ alertsRouter.get("/overview", authenticate, async (_req: AuthedRequest, res) => 
   const msDay = 86400000;
   const nextDays = new Date(now.getTime() + 3 * msDay);
   const ninetyDaysAgo = new Date(now.getTime() - 90 * msDay);
+  
 
   const patients = await prisma.patient.findMany();
+  const appointmentRequests = await prisma.appointmentRequest.findMany({
+  orderBy: { createdAt: "desc" },
+  take: 20,
+});
 
   const overdueFollowUps = patients.filter(
     (p) => p.followUpDue && p.followUpDue < now
@@ -56,5 +61,10 @@ alertsRouter.get("/overview", authenticate, async (_req: AuthedRequest, res) => 
       patient: toPatientDTO(p),
       issue: "Missing blood type, emergency contact, or primary condition",
     })),
+    appointmentRequests: appointmentRequests.map((r) => ({
+  contact: r.requesterContact,
+  message: r.message,
+  createdAt: r.createdAt.toISOString(),
+})),
   });
 });

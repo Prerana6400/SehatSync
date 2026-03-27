@@ -144,6 +144,27 @@ const Alerts = () => {
             </div>
           )}
         </section>
+        <section className="space-y-4">
+  <h2 className="text-xl font-semibold text-foreground">WhatsApp Requests</h2>
+
+  {data.appointmentRequests?.length === 0 ? (
+    <p className="text-sm text-muted-foreground">No incoming requests.</p>
+  ) : (
+    <div className="space-y-3">
+      {data.appointmentRequests?.map((r, index) => (
+      <AlertCard
+  key={`req-${index}`}
+  title={r.contact || "Unknown"}
+  description={r.message || "Request received"}
+  primaryAction={{
+    label: "View",
+    onClick: () => console.log("Clicked request", r),
+  }}
+/>
+      ))}
+    </div>
+  )}
+</section>
       </div>
     </div>
   );

@@ -11,4 +11,9 @@ export type AlertOverview = {
   }[];
   needingCheckups: { patient: Patient; issue: string }[];
   incompleteProfiles: { patient: Patient; issue: string }[];
+  appointmentRequests: {
+  contact: string | null;
+  message: string | null;
+  createdAt: string;
+}[];
 };

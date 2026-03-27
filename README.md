@@ -180,8 +180,10 @@ For a single URL dynamic deployment (frontend + backend together), deploy as one
 - Build command:
 
   ```bash
-  npm install && npm install --prefix server && npm run build && npm run build --prefix server
+  npm install --include=dev && npm install --prefix server --include=dev && npm run build && npm run build --prefix server
   ```
+
+  The server `build` script runs `prisma generate` before `tsc` so `@prisma/client` types (enums, `Prisma.*` inputs) exist on CI. Omitting devDependencies breaks the Vite build; the server needs devDependencies for `prisma` CLI and TypeScript during `npm run build --prefix server`.
 
 - Start command:
 

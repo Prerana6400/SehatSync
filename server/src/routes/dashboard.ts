@@ -1,11 +1,15 @@
 import { Router } from "express";
-import { AppointmentStatus, Prisma } from "@prisma/client";
+import { AppointmentStatus, type Patient } from "@prisma/client";
+import {
+  PrismaClientInitializationError,
+  PrismaClientKnownRequestError,
+} from "@prisma/client/runtime/library";
 import { prisma } from "../lib/prisma.js";
 import { authenticate, type AuthedRequest } from "../middleware/auth.js";
 
 function isDatabaseUnavailable(err: unknown): boolean {
-  if (err instanceof Prisma.PrismaClientInitializationError) return true;
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (err instanceof PrismaClientInitializationError) return true;
+  if (err instanceof PrismaClientKnownRequestError) {
     return ["P1001", "P1017"].includes(err.code);
   }
   if (err instanceof Error) {
@@ -59,14 +63,14 @@ dashboardRouter.get("/overview", authenticate, async (_req: AuthedRequest, res, 
     where: { createdAt: { gte: weekStart } },
   });
 
-  const pendingFollowUps = patients.filter((p) => {
+  const pendingFollowUps = patients.filter((p: Patient) => {
     if (p.followUpDue && p.followUpDue < now) return true;
     if (p.lastVisit && p.lastVisit < thirtyDaysAgo) return true;
     return false;
   });
 
   const incompleteProfiles = patients.filter(
-    (p) => !p.bloodType || !p.emergencyContact || !p.primaryCondition
+    (p: Patient) => !p.bloodType || !p.emergencyContact || !p.primaryCondition
   );
 
   const dailyVisits: { date: string; count: number }[] = [];
@@ -111,7 +115,7 @@ dashboardRouter.get("/overview", authenticate, async (_req: AuthedRequest, res, 
     take: 8,
   });
 
-  const recentForUi = recentlyAdded.map((p) => ({
+  const recentForUi = recentlyAdded.map((p: Patient) => ({
     id: p.id,
     name: p.name,
     age: p.age,
